@@ -6,6 +6,12 @@ set(CMAKE_CXX_STANDARD 14)
 
 set(Boost_FIND_QUIETLY ON) #FINALLY!!!
 
+if (BUILD_CUBIE)
+    set(BUILD_RASPBERRYPI true)
+    message("Build on LED Cubie is enabled")
+    add_definitions( -DX_DISPLAY_MISSING=1 )
+endif ()
+
 if (EXISTS "/boot/LICENCE.broadcom") # I expect this file to be only found on an Raspian distribution
     set(BUILD_RASPBERRYPI true)
     message("Build on Raspberry Pi is enabled")

@@ -11,9 +11,10 @@ set(MAINSRC
 set(MAINLIBS
         #  libasound.so
         matrixapplication::matrixapplication
+        matrixapplication::common
         )
 
 add_executable(Breakout3D ${MAINSRC})
 target_link_libraries(Breakout3D ${MAINLIBS})
 
-install(TARGETS Breakout3D DESTINATION /home/pi/APPS)
+install(TARGETS Breakout3D DESTINATION /opt/ledcube/apps)

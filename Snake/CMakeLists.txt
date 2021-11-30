@@ -9,9 +9,10 @@ set(MAINSRC
 
 set(MAINLIBS
         matrixapplication::matrixapplication
+        matrixapplication::common
 )
 
 add_executable(Snake ${MAINSRC})
 target_link_libraries(Snake ${MAINLIBS})
 
-install(TARGETS Snake DESTINATION /home/pi/APPS)
+install(TARGETS Snake DESTINATION /opt/ledcube/apps)

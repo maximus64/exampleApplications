@@ -7,10 +7,11 @@ set(MAINSRC
 
 set(MAINLIBS
         matrixapplication::matrixapplication
+        matrixapplication::common
         stdc++fs
 )
 
 add_executable(Picture ${MAINSRC})
 target_link_libraries(Picture ${MAINLIBS} ) #-l flag
 
-install(TARGETS Picture DESTINATION /home/pi/APPS)
+install(TARGETS Picture DESTINATION /opt/ledcube/apps)

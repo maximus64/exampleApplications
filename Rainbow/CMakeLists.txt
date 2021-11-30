@@ -7,9 +7,10 @@ set(MAINSRC
 
 set(MAINLIBS
         matrixapplication::matrixapplication
+        matrixapplication::common
 )
 
 add_executable(Rainbow ${MAINSRC})
 target_link_libraries(Rainbow ${MAINLIBS}) #-l flag
 
-install(TARGETS Rainbow DESTINATION /home/pi/APPS)
+install(TARGETS Rainbow DESTINATION /opt/ledcube/apps)

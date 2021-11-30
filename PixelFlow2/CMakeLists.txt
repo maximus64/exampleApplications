@@ -7,9 +7,9 @@ set(MAINSRC
 
 set(MAINLIBS
         matrixapplication::matrixapplication
-)
+        matrixapplication::common)
 
 add_executable(PixelFlow2 ${MAINSRC})
 target_link_libraries(PixelFlow2 ${MAINLIBS})
 
-install(TARGETS PixelFlow2 DESTINATION /home/pi/APPS)
+install(TARGETS PixelFlow2 DESTINATION /opt/ledcube/apps)
