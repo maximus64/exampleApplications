@@ -34,7 +34,7 @@ void Aplay::playGameSound(unsigned int id){
 
 void Aplay::playSoundBuffer(std::vector<unsigned char> buffer){
   int err;
-/*  snd_pcm_t *handle;
+  snd_pcm_t *handle;
   if ((err = snd_pcm_open(&handle, "default", SND_PCM_STREAM_PLAYBACK, 0)) < 0) {
           printf("Playback open error: %s\n", snd_strerror(err));
           exit(EXIT_FAILURE);
@@ -51,5 +51,4 @@ void Aplay::playSoundBuffer(std::vector<unsigned char> buffer){
   }
   snd_pcm_writei(handle, buffer.data(), buffer.size());
   snd_pcm_close(handle);
-*/
 }

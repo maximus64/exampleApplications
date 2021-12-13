@@ -5,11 +5,11 @@ find_package(matrixapplication REQUIRED)
 set(MAINSRC
         breakoutgame.cpp
         main.cpp
-        #aplay.cpp
+        aplay.cpp
         )
 
 set(MAINLIBS
-        #  libasound.so
+        libasound.so
         matrixapplication::matrixapplication
         matrixapplication::common
         )

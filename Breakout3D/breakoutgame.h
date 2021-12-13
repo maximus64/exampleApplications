@@ -4,7 +4,7 @@
 #include <CubeApplication.h>
 
 #include <Joystick.h>
-//#include "aplay.h"
+#include "aplay.h"
 
 #define DEFAULTGAMEDURATION 120
 #define DEFAULTHIGHSCOREFILE "/home/pi/.breakouthighscore"
@@ -48,7 +48,7 @@ private:
     std::vector<Joystick *> joysticks_;
     int remainingSeconds_;
     GameState gameState_;
-//  Aplay soundPlayer_;
+    Aplay soundPlayer_;
     int currentHighScore;
 };
 

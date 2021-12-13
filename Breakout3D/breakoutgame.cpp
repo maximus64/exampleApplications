@@ -62,7 +62,7 @@ void BreakoutGame::ballLoop(){
     ball->render();
     //Ball dying
     if(ball->iPosition()[2] == VIRTUALCUBEMAXINDEX && !ball->isDead()){
-//      soundPlayer_.playGameSound(2);
+      soundPlayer_.playGameSound(2);
       if(ball->lastPlayer() != NULL){
         ball->lastPlayer()->addToScore(-10);
       }
@@ -77,7 +77,7 @@ void BreakoutGame::blockLoop(){
     block->render();
     for(auto ball : balls_){
       if(block->collidesWith(ball->position())) {
-//        soundPlayer_.playGameSound(1);
+        soundPlayer_.playGameSound(1);
         //add score to the last player who touched the ball
         if(ball->lastPlayer() != NULL)
           ball->lastPlayer()->addToScore(block->score());
@@ -124,7 +124,7 @@ void BreakoutGame::playerLoop(){
     player->render();
     for(auto ball : balls_){
       if(player->collidesWith(ball->iPosition())) {
-//        soundPlayer_.playGameSound(0);
+        soundPlayer_.playGameSound(0);
         Vector3f collisionVector = ball->iPosition().cast<float>() - player->centerPosition().cast<float>(); //Vector3f(0,0,-8)
         collisionVector[2] = -15; //to always be upward facing
         switch(getScreenNumber(ball->iPosition())){
