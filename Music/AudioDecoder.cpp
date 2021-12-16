@@ -118,6 +118,7 @@ int AudioDecoder::getSample(std::vector<int16_t> &buf, int samples) {
                         fprintf(stderr, "Error while converting. ret=%d\n", ret);
                         exit(1);
                     }
+                    buffered_samples_.resize(ret);
                 }
             }
         }
@@ -249,12 +250,12 @@ void AudioDecoder::openStream(const char *fname, float start_pos) {
         avformat_close_input(&formatctx_);
         return;
     }
-    av_opt_set_int(resampler_, "in_channel_layout", codecctx_->channel_layout, 0);
-    av_opt_set_int(resampler_, "out_channel_layout", AV_CH_LAYOUT_MONO, 0);
+    av_opt_set_channel_layout(resampler_, "in_channel_layout",  codecctx_->channel_layout, 0);\
+    av_opt_set_channel_layout(resampler_, "out_channel_layout", AV_CH_LAYOUT_MONO,  0);
     av_opt_set_int(resampler_, "in_sample_rate", codecctx_->sample_rate, 0);
     av_opt_set_int(resampler_, "out_sample_rate", 48000, 0);
-    av_opt_set_int(resampler_, "in_sample_fmt", codecctx_->sample_fmt, 0);
-    av_opt_set_int(resampler_, "out_sample_fmt", AV_SAMPLE_FMT_S16, 0);
+    av_opt_set_sample_fmt(resampler_, "in_sample_fmt", codecctx_->sample_fmt, 0);
+    av_opt_set_sample_fmt(resampler_, "out_sample_fmt", AV_SAMPLE_FMT_S16, 0);
 
     if (swr_init(resampler_) < 0) {
         fprintf(stderr, "Failed to initialize the resampling context\n");

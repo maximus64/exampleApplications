@@ -13,8 +13,10 @@ private:
     float amplitute_;
     double db_mag_[128];
     double db_smooth_[128];
+    double db_weight_[128];
     double maxVal_;
     double minVal_;
+    float line_hue_;
 };
 
 

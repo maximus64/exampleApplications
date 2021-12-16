@@ -11,10 +11,25 @@
 #include "AudioDecoder.h"
 #include <fftw3.h>
 
-Music::Music() : CubeApplication(60), amplitute_(0), db_mag_({}), db_smooth_({}), maxVal_(0), minVal_(0) {
-  thread_ = std::unique_ptr<std::thread> (
-      new std::thread(&Music::playerLoop, this)
-  );
+Music::Music() : CubeApplication(60), amplitute_(0), db_mag_{}, db_smooth_{}, maxVal_(0), minVal_(50.0) {
+    static const double aWeightDecibels[16] = {
+        -24.22, -13.37, -8, -3.36,
+        -1.33, 0.00, 0.70, 0.91,
+        0.70, -0.07, -0.40, -0.84,
+        -1.60, -2.30, -3.15, -3.85,
+    };
+
+    for (int i = 0; i < 128; i++) {
+        int idxa = i / 8;
+        int idxb = idxa >= 15 ? 15 : idxa + 1;
+        double t = (i % 8) / 8.0;
+
+        db_weight_[i] = aWeightDecibels[idxa] + t * (aWeightDecibels[idxb] - aWeightDecibels[idxa]);
+    }
+
+    thread_ = std::unique_ptr<std::thread> (
+        new std::thread(&Music::playerLoop, this)
+    );
 }
 
 void Music::playerLoop() {
@@ -43,7 +58,7 @@ void Music::playerLoop() {
     frames = snd_pcm_avail(handle);
     printf("PCM frames available: %d\n", frames);
 
-#define NUM_SAMPLE 256
+#define NUM_SAMPLE 384
     buf.reserve(NUM_SAMPLE);
     double *mag;
     double *in;
@@ -56,7 +71,7 @@ void Music::playerLoop() {
     p = fftw_plan_dft_r2c_1d( NUM_SAMPLE, in, out, FFTW_MEASURE );
 
     while (getAppState() == AppState::running) {
-        auto count = ad.getSample(buf, 256);
+        auto count = ad.getSample(buf, NUM_SAMPLE);
         if (count <= 0)
             break;
         err = snd_pcm_writei(handle, buf.data(), count);
@@ -81,13 +96,17 @@ void Music::playerLoop() {
         fftw_execute(p);
 
         for ( int i = 0; i < 128; i++ ) {
-            db_mag_[i] = hypot(out[i][0], out[i][1]);
-            db_mag_[i] = (db_mag_[i] == 0.0) ? 0.0 : 20.0 * log10(db_mag_[i]);
-            //db_mag_[i] =  10.0 * log10(out[i][0] * out[i][0] +  out[i][1] * out[i][1]);
+            // db_mag_[i] = hypot(out[i][0], out[i][1]);
+            // db_mag_[i] = (db_mag_[i] == 0.0) ? 0.0 : 20.0 * log10(db_mag_[i]);
+            db_mag_[i] =  10.0 * log10(out[i][0] * out[i][0] +  out[i][1] * out[i][1]);
+            db_mag_[i] += db_weight_[i];
+
+            /* clamp value */
+            if (db_mag_[i] < 0) db_mag_[i] = 0.0;
+            if (db_mag_[i] > 150.0) db_mag_[i] = 150.0;
         }
 
         buf.clear();
-        //std::this_thread::sleep_for (std::chrono::seconds(1));
     }
 
     fftw_destroy_plan(p);
@@ -101,22 +120,25 @@ bool Music::loop() {
     static int loopcount = 0;
     static float intensity = 1.0f;
     float amp = abs(amplitute_);
-    Color bg_color;
-    static const double smooth_factor = 0.8;
+    Color line_color;
+    static const double smooth_factor = 0.6;//0.8;
     bool firstMinDone = false;
     int i;
     int bars[128];
     double curr_min = 0;
+    float hue = line_hue_;
+    const float hue_step = 1.40625;
 
-    clear();
+
+    //clear();
+    fade(.5);
 
     // intensity -= 0.05f;
     // if (amp > intensity)
     //     intensity = amp;
 
-    //bg_color.fromHSV(0, 1, (loopcount % 10) / 10.0f);
-    bg_color.fromHSV(loopcount % 360, 1, intensity);
-    //fillAll(bg_color);
+    //line_color.fromHSV(0, 1, (loopcount % 10) / 10.0f);
+    //fillAll(line_color);
 
     for (i = 0; i < 128; i++) {
         // Smooth using exponential moving average
@@ -132,7 +154,7 @@ bool Music::loop() {
         }
     }
 
-    const double min_smooth_factor = 0.99;
+    const double min_smooth_factor = 0.80;
     minVal_ = minVal_ * min_smooth_factor + (( 1.0- min_smooth_factor) * curr_min);
 
     double range = maxVal_ - minVal_;
@@ -145,50 +167,65 @@ bool Music::loop() {
     }
 
     for (i = 0; i < 64; i++) {
+        line_color.fromHSV(hue, 1, intensity);
+        hue += hue_step;
         int h = bars[i];
-        if (h > 0)
+        if (h > 0) {
             drawLine2D(ScreenNumber::front, 
                     i,63,
                     i,64-std::min(h, 63),
-                    bg_color);
+                    line_color);
+        }
     }
     for (i = 0; i < 64; i++) {
+        line_color.fromHSV(hue, 1, intensity);
+        hue += hue_step;
         int h = bars[64+i];
-        if (h > 0)
+        if (h > 0) {
             drawLine2D(ScreenNumber::right, 
                     i,63,
                     i,64-std::min(h, 63),
-                    bg_color);
+                    line_color);
+        }
     }
     for (i = 0; i < 64; i++) {
-        int h = bars[64-i];
-        if (h > 0)
-            drawLine2D(ScreenNumber::left, 
-                    i,63,
-                    i,64-std::min(h, 63),
-                    bg_color);
-    }
-    for (i = 0; i < 64; i++) {
+        line_color.fromHSV(hue, 1, intensity);
+        hue += hue_step;
         int h = bars[64+64-i];
-        if (h > 0)
+        if (h > 0) {
             drawLine2D(ScreenNumber::back, 
                     i,63,
                     i,64-std::min(h, 63),
-                    bg_color);
+                    line_color);
+        }
+    }
+    for (i = 0; i < 64; i++) {
+        line_color.fromHSV(hue, 1, intensity);
+        hue += hue_step;
+        int h = bars[64-i];
+        if (h > 0) {
+            drawLine2D(ScreenNumber::left, 
+                    i,63,
+                    i,64-std::min(h, 63),
+                    line_color);
+        }
     }
 
-//         drawLine3D(Vector3i(0,0,CUBESIZE-loopcount%CUBESIZE),Vector3i(CUBESIZE,0,CUBESIZE-loopcount%CUBESIZE), Color::red());
-//         drawLine3D(Vector3i(loopcount%CUBESIZE,0,CUBESIZE),Vector3i(loopcount%CUBESIZE,0,0), Color::blue());
-// //    }
-//     drawText(ScreenNumber::front, Vector2i(CharacterBitmaps::centered, CharacterBitmaps::centered), Color::white(), "Screen 0 front");
-//     drawText(ScreenNumber::right, Vector2i(CharacterBitmaps::centered, CharacterBitmaps::centered), Color::white(), "Screen 1 right");
-//     drawText(ScreenNumber::back, Vector2i(CharacterBitmaps::centered, CharacterBitmaps::centered), Color::white(), "Screen 2 back");
-//     drawText(ScreenNumber::left, Vector2i(CharacterBitmaps::centered, CharacterBitmaps::centered), Color::white(), "Screen 3 left");
-//     drawText(ScreenNumber::top, Vector2i(CharacterBitmaps::centered, CharacterBitmaps::centered), Color::white(), "Screen 4 top");
-//     drawText(ScreenNumber::bottom, Vector2i(CharacterBitmaps::centered, CharacterBitmaps::centered), Color::white(), "Screen 5 bottom");
-    
+    i = 0;
+    for (float r = 0.0; i < 128; r+= M_PI *2.0 / 128, i++) {
+        double normal = abs((db_smooth_[127-i] - minVal_) / scale_factor);
+        double height =  32.0f * normal;
+        double x = height * cos(r);
+        double y = height * sin(r);
+        line_color.fromHSV(360 - r*(180.0/M_PI) + line_hue_, 1, 1);
+        drawLine2D(ScreenNumber::top, 
+                    CUBECENTER,CUBECENTER,
+                    CUBECENTER-x,CUBECENTER-y,
+                    line_color);
+    }
 
     render();
     loopcount++;
+    line_hue_ += 1.5f;
     return true;
 }
