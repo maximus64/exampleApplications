@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.07)
 project(exampleApplications)
 
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/Modules/")
 
 set(CMAKE_CXX_STANDARD 14)
 
@@ -41,6 +42,7 @@ add_subdirectory(PixelFlow3)
 add_subdirectory(Picture)
 add_subdirectory(Snake)
 add_subdirectory(Rainbow)
+add_subdirectory(Music)
 
 set(CPACK_GENERATOR "DEB")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "LEDCube matrixserver example Applications")
