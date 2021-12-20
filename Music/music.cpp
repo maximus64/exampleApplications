@@ -12,6 +12,8 @@
 #include <fftw3.h>
 #include <filesystem>
 
+#define JS_DEADZONE 0.5
+
 namespace {
 static const Bitmap1bpp battery_indicator = {
     Vector2i(0,0),
@@ -179,7 +181,7 @@ void Music::decodeLoop() {
     snd_pcm_close(handle);
 }
 
-void Music::playingDraw() {
+void Music::playingDraw(unsigned loopcount) {
     constexpr float intensity = 1.0f;
     float amp = abs(amplitute_);
     Color line_color;
@@ -275,6 +277,57 @@ void Music::playingDraw() {
                     CUBECENTER,CUBECENTER,
                     CUBECENTER-x,CUBECENTER-y,
                     line_color);
+    }
+
+    std::time_t t = std::time(nullptr);
+    std::tm tm = *std::localtime(&t);
+
+    bool charging = adcBattery.isCharging();
+
+    auto battPercent = static_cast<float>(adcBattery.getPercentage()) / 100.0f;
+    std::stringstream sstime;
+    sstime << std::put_time(&tm, "%H:%M  %b %d %y");
+
+    for (uint screenCounter = 4; screenCounter < 6; screenCounter++) {
+        drawRect2D((ScreenNumber) screenCounter, 0, 0, CUBEMAXINDEX, 6, Color::black(), true, Color::black());
+        drawRect2D((ScreenNumber) screenCounter, 0, CUBEMAXINDEX-6, CUBEMAXINDEX, CUBEMAXINDEX, Color::black(), true, Color::black());
+
+        drawText((ScreenNumber) screenCounter, Vector2i(CharacterBitmaps::left, 58), Color::blue(), sstime.str() );
+        drawText((ScreenNumber) screenCounter, Vector2i(CharacterBitmaps::left, 1), Color::blue(), hostname_);
+
+        /* Draw battery indicator */
+        int bat_lvl;
+        Color bat_color, bat_outline;
+
+        if (charging) {
+            /* display scaning battery animation when charging */
+            bat_color = Color::green();
+            bat_outline = Color::white();
+            bat_lvl = (loopcount >> 5) % 10;
+        }
+        else {
+            bat_lvl = std::nearbyint(battPercent * 9.0f);
+            uint8_t bat_color_g = std::nearbyint(battPercent * 255.0f);
+            uint8_t bat_color_r = 255 - bat_color_g;
+            bat_color = Color(bat_color_r, bat_color_g, 0);
+
+            if (battPercent < 0.05) {
+                /* blinking red/white battery outline when low on charge */
+                if ((loopcount >> 6) & 1)
+                    bat_outline = Color::red();
+                else
+                    bat_outline = Color::white();
+            }
+            else {
+                bat_outline = Color::white();
+            }
+        }
+
+        drawBitmap1bpp((ScreenNumber) screenCounter, Vector2i(CUBEMAXINDEX-11, 0), bat_outline, battery_indicator);
+        if (bat_lvl)
+            drawRect2D((ScreenNumber) screenCounter, CUBEMAXINDEX-10, 1, CUBEMAXINDEX-11+bat_lvl, 4, bat_color, true, bat_color);
+        if (charging)
+            drawText((ScreenNumber) screenCounter, Vector2i(CUBEMAXINDEX-7, 0), Color::white(), std::string("+") );
     }
 
     line_hue_ += 1.0f;
@@ -399,13 +452,20 @@ void Music::selectDraw(unsigned loopcount) {
 
 bool Music::loop() {
     static unsigned loopcount = 0;
+    static bool once;
+
+    if (!once) {
+        volume_ = (float)getVolume();
+        accel_volume_ = 0.0;
+        once = true;
+    }
 
     switch (state_) {
     case MS_SELECT:
         selectDraw(loopcount);
         break;
     case MS_PLAYING:
-        playingDraw();
+        playingDraw(loopcount);
         break;
     case MS_END:
         if (thread_) {
@@ -415,6 +475,26 @@ bool Music::loop() {
         return false;
     default:
         break;
+    }
+
+    auto val = joystickmngr.getAxis(2);
+    if (abs(val) > JS_DEADZONE) {
+        accel_volume_ += val * 0.03;
+        volume_ += accel_volume_;
+        if (volume_ > 100.0) volume_ = 100.0;
+        if (volume_ < 0.0) volume_ = 0.0;
+        int vol = std::ceil(volume_);
+        setVolume(vol);
+
+        std::stringstream ss;
+        ss << "Volume: " << vol;
+        for (uint screenCounter = 0; screenCounter < 6; screenCounter++) {
+            drawRect2D((ScreenNumber) screenCounter, 0, 28, CUBEMAXINDEX, 36, Color::black(), true, Color::black());
+            drawText((ScreenNumber) screenCounter, Vector2i(CharacterBitmaps::centered, 30), Color::green(), ss.str());
+        }
+    }
+    else {
+        accel_volume_ = 0.0;
     }
 
     joystickmngr.clearAllButtonPresses();

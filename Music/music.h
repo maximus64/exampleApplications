@@ -25,7 +25,7 @@ private:
     };
     struct SongInfo;
     void decodeLoop();
-    void playingDraw();
+    void playingDraw(unsigned loopcount);
     void selectDraw(unsigned loopcount);
 
     JoystickManager joystickmngr;
@@ -42,6 +42,7 @@ private:
     MenuState state_;
     std::string hostname_;
     int song_idx_;
+    float volume_, accel_volume_;
 };
 
 
