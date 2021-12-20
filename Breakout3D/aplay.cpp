@@ -28,7 +28,7 @@ Aplay::Aplay(){
 
 void Aplay::playGameSound(unsigned int id){
   if(id < soundBufferData_.size()){
-    boost::async( [=]{ return this->playSoundBuffer(soundBufferData_.at(id)); } );
+    boost::async( [=, this]{ return this->playSoundBuffer(soundBufferData_.at(id)); } );
   }
 }
 

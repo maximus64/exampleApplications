@@ -3,7 +3,7 @@ project(exampleApplications)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/Modules/")
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 20)
 
 set(Boost_FIND_QUIETLY ON) #FINALLY!!!
 
