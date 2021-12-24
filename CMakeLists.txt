@@ -43,6 +43,7 @@ add_subdirectory(Picture)
 add_subdirectory(Snake)
 add_subdirectory(Rainbow)
 add_subdirectory(Music)
+add_subdirectory(Glow)
 
 set(CPACK_GENERATOR "DEB")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "LEDCube matrixserver example Applications")
