@@ -8,7 +8,7 @@
 #include <experimental/filesystem>
 
 namespace fs = std::experimental::filesystem;
-std::string filepath = "/media/usb0/autoload.png";
+std::string filepath = "/nvram/picture.png";
 fs::file_time_type lastModificationTime;
 int animationPrescale = 0;
 
