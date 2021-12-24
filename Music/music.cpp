@@ -246,7 +246,7 @@ void Music::playingDraw(unsigned loopcount) {
     for (i = 0; i < 64; i++) {
         line_color.fromHSV(hue, 1, intensity);
         hue += hue_step;
-        int h = bars[64+64-i];
+        int h = bars[i];
         if (h > 0) {
             drawLine2D(ScreenNumber::back, 
                     i,63,
@@ -257,7 +257,7 @@ void Music::playingDraw(unsigned loopcount) {
     for (i = 0; i < 64; i++) {
         line_color.fromHSV(hue, 1, intensity);
         hue += hue_step;
-        int h = bars[64-i];
+        int h = bars[64+i];
         if (h > 0) {
             drawLine2D(ScreenNumber::left, 
                     i,63,
